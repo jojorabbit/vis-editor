@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 See AUTHORS file.
+ * Copyright 2014-2017 See AUTHORS file.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,12 @@ class TestApplication extends ApplicationAdapter {
 			@Override
 			public void changed (ChangeEvent event, Actor actor) {
 				stage.addActor(new TestMultiSplitPane());
+			}
+		}));
+		menu.addItem(new MenuItem("generate disabled image", new ChangeListener() {
+			@Override
+			public void changed (ChangeEvent event, Actor actor) {
+				stage.addActor(new TestGenerateDisabledImage());
 			}
 		}));
 		menu.addSeparator();

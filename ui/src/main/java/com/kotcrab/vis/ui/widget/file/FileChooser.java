@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 See AUTHORS file.
+ * Copyright 2014-2017 See AUTHORS file.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,7 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 	private FileListAdapter fileListAdapter;
 	private Array<FileItem> selectedItems = new Array<FileItem>();
 	private ShortcutItem selectedShortcut;
+	private String defaultFileName;
 
 	private boolean watchingFilesEnabled = true;
 	private Thread fileWatcherThread;
@@ -253,6 +254,14 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 		});
 
 		fileNameSuggestionPopup = new FileSuggestionPopup(this);
+		fileNameSuggestionPopup.setListener(new PopupMenu.PopupMenuListener() {
+			@Override
+			public void activeItemChanged (MenuItem newItem, boolean changedByKeyboard) {
+				if (changedByKeyboard == false || newItem == null) return;
+				highlightFiles(currentDirectory.child(newItem.getText().toString()));
+				updateSelectedFileFieldText(true);
+			}
+		});
 
 		rebuildShortcutsList();
 
@@ -508,6 +517,7 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 		VisTable table = new VisTable(true);
 		VisLabel nameLabel = new VisLabel(FILE_NAME.get());
 		selectedFileTextField = new VisTextField();
+		selectedFileTextField.setProgrammaticChangeEvents(false);
 
 		fileTypeLabel = new VisLabel(FILE_TYPE.get());
 		fileTypeSelectBox = new VisSelectBox<FileTypeFilter.Rule>();
@@ -539,9 +549,10 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 				}
 				return false;
 			}
-
+		});
+		selectedFileTextField.addListener(new ChangeListener() {
 			@Override
-			public boolean keyTyped (InputEvent event, char character) {
+			public void changed (ChangeEvent event, Actor actor) {
 				deselectAll(false);
 				fileNameSuggestionPopup.pathFieldKeyTyped(getChooserStage(), currentFiles, selectedFileTextField);
 
@@ -549,7 +560,6 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 				if (currentFiles.contains(enteredFile, false)) {
 					highlightFiles(enteredFile);
 				}
-				return false;
 			}
 		});
 
@@ -860,6 +870,10 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 	}
 
 	private void rebuildFileList () {
+		rebuildFileList(false);
+	}
+
+	private void rebuildFileList (final boolean stageChanged) {
 		filesListRebuildScheduled = false;
 		final FileHandle[] selectedFiles = new FileHandle[selectedItems.size];
 		for (int i = 0; i < selectedFiles.length; i++) {
@@ -870,7 +884,7 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 		setCurrentPathFieldText(currentDirectory.path());
 
 		if (showBusyBarTask.isScheduled() == false) {
-			Timer.schedule(showBusyBarTask, 0.2f); //quite period before busy bar is shown
+			Timer.schedule(showBusyBarTask, 0.2f); //quiet period before busy bar is shown
 		}
 
 		if (listDirFuture != null) listDirFuture.cancel(true);
@@ -898,14 +912,14 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 				Gdx.app.postRunnable(new Runnable() {
 					@Override
 					public void run () {
-						buildFileList(files, metadata, selectedFiles);
+						buildFileList(files, metadata, selectedFiles, stageChanged);
 					}
 				});
 			}
 		});
 	}
 
-	private void buildFileList (Array<FileHandle> files, IdentityMap<FileHandle, FileHandleMetadata> metadata, FileHandle[] selectedFiles) {
+	private void buildFileList (Array<FileHandle> files, IdentityMap<FileHandle, FileHandleMetadata> metadata, FileHandle[] selectedFiles, boolean stageChanged) {
 		currentFiles.clear();
 		currentFilesMetadata.clear();
 		showBusyBarTask.cancel();
@@ -925,6 +939,14 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 		fileListView.getScrollPane().setScrollX(0);
 		fileListView.getScrollPane().setScrollY(0);
 		highlightFiles(selectedFiles);
+
+		if (stageChanged && selectedFiles.length == 0 && defaultFileName != null) {
+			selectedFileTextField.setText(defaultFileName);
+			FileHandle enteredFile = currentDirectory.child(selectedFileTextField.getText());
+			if (currentFiles.contains(enteredFile, false)) {
+				highlightFiles(enteredFile);
+			}
+		}
 	}
 
 	/**
@@ -946,10 +968,31 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 		updateSelectedFileFieldText();
 	}
 
+	/**
+	 * Changes default file name that will be displayed in file name text field after chooser is added to stage.
+	 * This for example can be used to suggest default file name when chooser is in SAVE mode.
+	 * <p>
+	 * Note that when chooser is in OPEN mode and file with such name doesn't exist then pressing "Open" button
+	 * will still display message that selected file does not exist.
+	 * <p>
+	 * Default file name is only used after chooser is added to {@link Stage} and no other file was selected by
+	 * {@link #setSelectedFiles(FileHandle...)} or user.
+	 * <p>
+	 * This will automatically highlight matching file in file list (if file already exist).
+	 * @param text new default file name, may be null
+	 */
+	public void setDefaultFileName (String text) {
+		defaultFileName = text;
+	}
+
 	/** Refresh chooser lists content */
 	public void refresh () {
+		refresh(false);
+	}
+
+	private void refresh (boolean stageChanged) {
 		rebuildShortcutsList();
-		rebuildFileList();
+		rebuildFileList(stageChanged);
 	}
 
 	/**
@@ -1043,7 +1086,13 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 	}
 
 	private void updateSelectedFileFieldText () {
-		if (getChooserStage() != null && getChooserStage().getKeyboardFocus() == selectedFileTextField) return;
+		updateSelectedFileFieldText(false);
+	}
+
+	private void updateSelectedFileFieldText (boolean ignoreKeyboardFocus) {
+		if (ignoreKeyboardFocus == false && getChooserStage() != null) {
+			if (getChooserStage().getKeyboardFocus() == selectedFileTextField) return;
+		}
 		if (selectedItems.size == 0) {
 			selectedFileTextField.setText("");
 		} else if (selectedItems.size == 1) {
@@ -1371,7 +1420,7 @@ public class FileChooser extends VisWindow implements FileHistoryCallback {
 		super.setStage(stage);
 
 		if (stage != null) {
-			refresh();
+			refresh(true);
 			rebuildShortcutsFavoritesPanel(); //if by any chance multiple choosers changed favorites
 			deselectAll();
 			if (focusFileScrollPaneOnShow) stage.setScrollFocus(fileListView.getScrollPane());

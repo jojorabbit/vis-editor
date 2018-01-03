@@ -1,5 +1,5 @@
 group = 'com.kotcrab.vis'
-version = '1.4.0-SNAPSHOT'
+version = '1.4.1-SNAPSHOT'
 
 apply plugin: "java"
 apply plugin: 'maven'
@@ -8,6 +8,15 @@ apply from: '../deploy.gradle'
 archivesBaseName = "vis-ui"
 sourceCompatibility = 1.6
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+dependencies {
+    compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+    provided "com.apple:AppleJavaExtensions:$appleJavaExtensionsVersion", optional
+    testCompile "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    testCompile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    testCompile "junit:junit:$junitVersion"
+    //testCompile "org.imgscalr:imgscalr-lib:4.2"
+}
 
 test {
     useJUnit {

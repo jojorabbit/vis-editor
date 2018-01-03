@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 See AUTHORS file.
+ * Copyright 2014-2017 See AUTHORS file.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -495,6 +495,7 @@ public class DragPane extends Container<WidgetGroup> {
 		protected boolean addToHorizontalGroup (final Actor actor, final DragPane dragPane, final Actor directPaneChild) {
 			final Array<Actor> children = dragPane.getChildren();
 			final int indexOfDraggedActor = children.indexOf(actor, true);
+			actor.remove();
 			if (indexOfDraggedActor >= 0) {
 				final int indexOfDirectChild = children.indexOf(directPaneChild, true);
 				if (indexOfDirectChild > indexOfDraggedActor) {
@@ -519,6 +520,7 @@ public class DragPane extends Container<WidgetGroup> {
 		protected boolean addToVerticalGroup (final Actor actor, final DragPane dragPane, final Actor directPaneChild) {
 			final Array<Actor> children = dragPane.getChildren();
 			final int indexOfDraggedActor = children.indexOf(actor, true);
+			actor.remove();
 			if (indexOfDraggedActor >= 0) {
 				final int indexOfDirectChild = children.indexOf(directPaneChild, true);
 				if (indexOfDirectChild > indexOfDraggedActor) {
@@ -576,6 +578,7 @@ public class DragPane extends Container<WidgetGroup> {
 			final Array<Actor> children = dragPane.getChildren();
 			final int indexOfDirectChild = children.indexOf(directPaneChild, true);
 			final int indexOfDraggedActor = children.indexOf(actor, true);
+			actor.remove();
 			if (indexOfDraggedActor >= 0) { // Dragging own actor.
 				if (indexOfDraggedActor > indexOfDirectChild) { // Dropped after current position.
 					dragPane.addActorBefore(directPaneChild, actor);

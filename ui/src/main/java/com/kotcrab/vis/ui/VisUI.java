@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 See AUTHORS file.
+ * Copyright 2014-2017 See AUTHORS file.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
  */
 public class VisUI {
 	/** Current VisUI version, does not include SNAPSHOT even if this version is snapshot. */
-	public static final String VERSION = "1.3.1";
+	public static final String VERSION = "1.4.1";
 
-	private static final String TARGET_GDX_VERSION = "1.9.6";
+	private static final String TARGET_GDX_VERSION = "1.9.8";
 	private static boolean skipGdxVersionCheck = false;
 
 	private static int defaultTitleAlign = Align.left;

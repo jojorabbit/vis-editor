@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 See AUTHORS file.
+ * Copyright 2014-2017 See AUTHORS file.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,7 +325,9 @@ public class VisTextField extends Widget implements Disableable, Focusable, Bord
 				: ((focused && style.focusedBackground != null) ? style.focusedBackground : style.background);
 
 		// vis
-		if (!disabled && clickListener.isOver() && style.backgroundOver != null) background = style.backgroundOver;
+		if (!disabled && style.backgroundOver != null && (clickListener.isOver() || focused)) {
+			background = style.backgroundOver;
+		}
 
 		Color color = getColor();
 		float x = getX();
@@ -1088,7 +1090,7 @@ public class VisTextField extends Widget implements Disableable, Focusable, Bord
 					String oldText = text;
 					int oldCursorPos = getCursorPosition();
 					setText(undoText);
-					VisTextField.this.setCursorPosition(undoCursorPos);
+					VisTextField.this.setCursorPosition(MathUtils.clamp(cursor, 0, undoText.length()));
 					undoText = oldText;
 					undoCursorPos = oldCursorPos;
 					updateDisplayText();
